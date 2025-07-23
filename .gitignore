@@ -43,3 +43,6 @@ fastlane/test_output/
 
 # Ignore by default
 !*.entitlements
+
+# Disk Images
+*.dmg
