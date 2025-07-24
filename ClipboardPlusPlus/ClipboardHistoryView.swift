@@ -47,9 +47,17 @@ struct ClipboardItemView: View {
                 .padding(.top, 2)
             
             VStack(alignment: .leading) {
-                Text(item.content)
-                    .lineLimit(2)
-                    .truncationMode(.tail)
+                if item.type == "image", let imageData = item.imageData, let nsImage = NSImage(data: imageData) {
+                    Image(nsImage: nsImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: 80, maxHeight: 60)
+                        .cornerRadius(6)
+                } else if let content = item.content {
+                    Text(content)
+                        .lineLimit(2)
+                        .truncationMode(.tail)
+                }
                 
                 Text(formattedDate)
                     .font(.caption)
