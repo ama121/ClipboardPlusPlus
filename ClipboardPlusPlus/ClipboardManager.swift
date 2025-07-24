@@ -3,12 +3,21 @@ import AppKit
 
 class ClipboardItem: Identifiable, Codable {
     var id = UUID()
-    var content: String
+    var content: String? // For text
+    var imageData: Data? // For images
     var date: Date
     var type: String
     
     init(content: String, type: String) {
         self.content = content
+        self.imageData = nil
+        self.date = Date()
+        self.type = type
+    }
+    
+    init(imageData: Data, type: String) {
+        self.content = nil
+        self.imageData = imageData
         self.date = Date()
         self.type = type
     }
@@ -39,25 +48,39 @@ class ClipboardManager: ObservableObject {
         if pasteboard.changeCount != lastChangeCount {
             lastChangeCount = pasteboard.changeCount
             
+            // Check for image content first
+            if let image = NSImage(pasteboard: pasteboard),
+               let tiffData = image.tiffRepresentation {
+                addImageItem(imageData: tiffData, type: "image")
+                return
+            }
             // Check for text content
             if let string = pasteboard.string(forType: .string) {
-                addItem(content: string, type: "text")
+                addTextItem(content: string, type: "text")
             }
-            // Could add support for images and other types later
         }
     }
     
-    func addItem(content: String, type: String) {
+    func addTextItem(content: String, type: String) {
         // Don't add duplicates
-        if !clipboardItems.contains(where: { $0.content == content }) {
+        if !clipboardItems.contains(where: { $0.content == content && $0.type == "text" }) {
             let newItem = ClipboardItem(content: content, type: type)
             clipboardItems.insert(newItem, at: 0)
-            
-            // Limit the number of items
             if clipboardItems.count > maxItems {
                 clipboardItems.removeLast()
             }
-            
+            saveToDisk()
+        }
+    }
+    
+    func addImageItem(imageData: Data, type: String) {
+        // Don't add duplicates (by image data)
+        if !clipboardItems.contains(where: { $0.imageData == imageData && $0.type == "image" }) {
+            let newItem = ClipboardItem(imageData: imageData, type: type)
+            clipboardItems.insert(newItem, at: 0)
+            if clipboardItems.count > maxItems {
+                clipboardItems.removeLast()
+            }
             saveToDisk()
         }
     }
@@ -65,11 +88,11 @@ class ClipboardManager: ObservableObject {
     func copyToClipboard(item: ClipboardItem) {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        
-        if item.type == "text" {
-            pasteboard.setString(item.content, forType: .string)
+        if item.type == "text", let content = item.content {
+            pasteboard.setString(content, forType: .string)
+        } else if item.type == "image", let imageData = item.imageData, let image = NSImage(data: imageData) {
+            pasteboard.writeObjects([image])
         }
-        // Handle other types as needed
     }
     
     func clearHistory() {
