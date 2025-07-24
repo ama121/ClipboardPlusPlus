@@ -18,6 +18,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var shortcutManager: KeyboardShortcutManager!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Hide dock icon programmatically
+        NSApp.setActivationPolicy(.accessory)
+        
         // Initialize clipboard manager
         clipboardManager = ClipboardManager()
         
@@ -84,5 +87,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+    
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return false
     }
 }
