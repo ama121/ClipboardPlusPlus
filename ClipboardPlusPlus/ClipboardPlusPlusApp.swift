@@ -16,12 +16,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var clipboardManager: ClipboardManager!
     var popover: NSPopover!
     var shortcutManager: KeyboardShortcutManager!
+    var shortcutPreferences: ShortcutPreferences!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide dock icon programmatically
         NSApp.setActivationPolicy(.accessory)
         
-        // Initialize clipboard manager
+        // Initialize preferences and clipboard manager
+        shortcutPreferences = ShortcutPreferences()
         clipboardManager = ClipboardManager()
         
         // Setup status bar item
@@ -35,7 +37,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover = NSPopover()
         popover.contentSize = NSSize(width: 300, height: 400)
         popover.behavior = .transient
-        popover.contentViewController = NSHostingController(rootView: ClipboardHistoryView(clipboardManager: clipboardManager))
+        popover.contentViewController = NSHostingController(
+            rootView: ClipboardHistoryView(
+                clipboardManager: clipboardManager,
+                shortcutPreferences: shortcutPreferences
+            )
+        )
         
         // Register global shortcuts
         setupGlobalShortcuts()
@@ -52,19 +59,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
-    func setupGlobalShortcuts() {
-        shortcutManager = KeyboardShortcutManager(clipboardManager: clipboardManager)
+    private func setupGlobalShortcuts() {
+        shortcutManager = KeyboardShortcutManager(
+            clipboardManager: clipboardManager,
+            shortcutPreferences: shortcutPreferences
+        )
         
         // Listen for paste notifications
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(handlePasteNotification(_:)),
+            selector: #selector(pasteClipboardItem),
             name: NSNotification.Name("PasteClipboardItem"),
             object: nil
         )
     }
     
-    @objc func handlePasteNotification(_ notification: Notification) {
+    @objc func pasteClipboardItem(notification: Notification) {
         if let index = notification.userInfo?["index"] as? Int {
             if index < clipboardManager.clipboardItems.count {
                 let item = clipboardManager.clipboardItems[index]

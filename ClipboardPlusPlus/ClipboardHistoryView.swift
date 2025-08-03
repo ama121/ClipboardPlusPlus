@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ClipboardHistoryView: View {
     @ObservedObject var clipboardManager: ClipboardManager
+    @ObservedObject var shortcutPreferences: ShortcutPreferences
+    @State private var showingSettings = false
     
     var body: some View {
         VStack {
@@ -9,6 +11,14 @@ struct ClipboardHistoryView: View {
                 Text("Clipboard++")
                     .font(.headline)
                 Spacer()
+                Button(action: {
+                    showingSettings = true
+                }) {
+                    Image(systemName: "gear")
+                }
+                .buttonStyle(.borderless)
+                .help("Settings")
+                
                 Button(action: {
                     clipboardManager.clearHistory()
                 }) {
@@ -20,14 +30,18 @@ struct ClipboardHistoryView: View {
             
             List {
                 ForEach(Array(clipboardManager.clipboardItems.enumerated()), id: \.element.id) { index, item in
-                    ClipboardItemView(item: item, index: index, clipboardManager: clipboardManager)
+                    ClipboardItemView(item: item, index: index, clipboardManager: clipboardManager, shortcutPreferences: shortcutPreferences)
                 }
             }
             
-            Text("Shortcuts: ⌘⌃1-⌘⌃9 to paste items")
+            // Force UI update by directly using the selectedModifier
+            Text("Shortcuts: \(shortcutPreferences.selectedModifier.shortDisplayName)1-\(shortcutPreferences.selectedModifier.shortDisplayName)9 to paste items")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.bottom, 5)
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView(shortcutPreferences: shortcutPreferences)
         }
     }
 }
@@ -36,14 +50,15 @@ struct ClipboardItemView: View {
     let item: ClipboardItem
     let index: Int
     let clipboardManager: ClipboardManager
+    @ObservedObject var shortcutPreferences: ShortcutPreferences
     
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            // Display the shortcut number (index + 1 because arrays are 0-indexed)
-            Text("\(index + 1)")
-                .font(.system(size: 14, weight: .bold))
+            // Display the shortcut number with current modifier - directly use selectedModifier for reactivity
+            Text("\(shortcutPreferences.selectedModifier.shortDisplayName)\(index + 1)")
+                .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.blue)
-                .frame(width: 20, alignment: .center)
+                .frame(width: 35, alignment: .center)
                 .padding(.top, 2)
             
             VStack(alignment: .leading) {
