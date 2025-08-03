@@ -24,7 +24,7 @@ struct ClipboardHistoryView: View {
                 }
             }
             
-            Text("Shortcuts: ⌘1-⌘9 to paste items")
+            Text("Shortcuts: ⌘⌃1-⌘⌃9 to paste items")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.bottom, 5)

@@ -16,9 +16,9 @@ class KeyboardShortcutManager {
     }
     
     private func registerShortcuts() {
-        // Register Command+1 through Command+9 for pasting items 1-9
+        // Register Command+Control+1 through Command+Control+9 for pasting items 1-9
         for i in 1...9 {
-            registerShortcut(keyCode: UInt32(0x12 + i - 1), modifiers: UInt32(cmdKey), index: i - 1)
+            registerShortcut(keyCode: UInt32(0x12 + i - 1), modifiers: UInt32(cmdKey | controlKey), index: i - 1)
         }
     }
     
